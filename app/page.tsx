@@ -15,8 +15,7 @@ import TextShuffle from "@/components/TextShuffle";
 import SpotifyPlayer from "@/components/SpotifyPlayer";
 import { Progress } from "@/components/ui/progress";
 
-const HOST = "http://localhost"
-const PORT = "8000"
+const FAST_APP = process.env.NEXT_PUBLIC_FAST_APP;
 
 enum MessageType {
   User = "user",
@@ -283,7 +282,7 @@ export default function Home() {
 
   const loadHistory = async (sid: string) => {
     try {
-      const response = await fetch(`${HOST}:${PORT}/api/history/${sid}`);
+      const response = await fetch(`${FAST_APP}/api/history/${sid}`);
       if (response.ok) {
         const data = await response.json();
         const loadedMessages: Message[] = data.messages.map((msg: any, index: number) => ({
@@ -309,7 +308,7 @@ export default function Home() {
 
     // Use streaming request
     try {
-      const response = await fetch(`${HOST}:${PORT}/api/chat`, {
+      const response = await fetch(`${FAST_APP}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -385,7 +384,7 @@ export default function Home() {
 
   async function makeRegularRequest(agentText: string) {
     try {
-      const response = await fetch(`${HOST}:${PORT}/api/chat`, {
+      const response = await fetch(`${FAST_APP}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -429,8 +428,6 @@ export default function Home() {
 
     setLoading(true);
     const data = await makeAgentRequest(example.text);
-    console.log(`data`);
-    console.log(data);
     setLoading(false);
 
     if (data && data.response) {
