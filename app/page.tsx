@@ -32,7 +32,7 @@ interface Message {
 }
 
 const getPlaylistState: Record<string, number> = {
-  "Creating Playlist": 1,
+  "Creating your playlist": 1,
   "Searching the web": 2,
   "Searching Spotify": 3,
   "Generating an image": 4,
@@ -70,17 +70,102 @@ interface ChatMessageProps {
 
 
 function ChatMessage({message, messageId}: ChatMessageProps) {
+  const [imageBlobUrls, setImageBlobUrls] = useState<string[]>([]);
+  const [imagesLoading, setImagesLoading] = useState(false);
+  const [markdownImageBlobs, setMarkdownImageBlobs] = useState<Record<string, string>>({});
+
   let messageText = message.text;
 
   if (message.messageType === MessageType.LLM) {
     if (message.text.startsWith("```markdown")) {
-      // messageText = message.text.substring("```markdown".length+1, message.text.length);
       messageText = message.text.substring("```markdown".length).trimStart();
     }
     if (messageText.endsWith("```")) {
       messageText = messageText.substring(0, messageText.length - 3).trimEnd();
     }
   }
+
+  // Load images with ngrok-skip-browser-warning header
+  useEffect(() => {
+    const loadImages = async () => {
+      if (!message.images || message.images.length === 0) return;
+      
+      setImagesLoading(true);
+      
+      const blobUrls = await Promise.all(
+        message.images.map(async (imageUrl) => {
+          try {
+            const response = await fetch(imageUrl, {
+              headers: {
+                'ngrok-skip-browser-warning': 'true'
+              }
+            });
+            const blob = await response.blob();
+            return URL.createObjectURL(blob);
+          } catch (error) {
+            console.error('Failed to load image:', error);
+            return '';
+          }
+        })
+      );
+      
+      setImageBlobUrls(blobUrls.filter(url => url !== ''));
+      setImagesLoading(false);
+    };
+
+    loadImages();
+
+    // Cleanup blob URLs when component unmounts
+    return () => {
+      imageBlobUrls.forEach(url => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    };
+  }, [message.images]);
+
+  // Load markdown images with ngrok-skip-browser-warning header
+  useEffect(() => {
+    const loadMarkdownImages = async () => {
+      // Extract image URLs from markdown text
+      const imageRegex = /!\[.*?\]\((https?:\/\/[^\)]+)\)/g;
+      const matches = [...messageText.matchAll(imageRegex)];
+      
+      if (matches.length === 0) return;
+
+      const blobMap: Record<string, string> = {};
+      
+      await Promise.all(
+        matches.map(async (match) => {
+          const imageUrl = match[1];
+          try {
+            const response = await fetch(imageUrl, {
+              headers: {
+                'ngrok-skip-browser-warning': 'true'
+              }
+            });
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            blobMap[imageUrl] = blobUrl;
+          } catch (error) {
+            console.error('Failed to load markdown image:', error);
+          }
+        })
+      );
+      
+      setMarkdownImageBlobs(blobMap);
+    };
+
+    if (message.messageType === MessageType.LLM) {
+      loadMarkdownImages();
+    }
+
+    // Cleanup blob URLs when component unmounts
+    return () => {
+      Object.values(markdownImageBlobs).forEach(url => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    };
+  }, [messageText, message.messageType]);
 
   function extractSpotifyUris(text: string): string[] {
     const trackRegex = /https:\/\/open\.spotify\.com\/track\/[a-zA-Z0-9]+/g;
@@ -95,9 +180,7 @@ function ChatMessage({message, messageId}: ChatMessageProps) {
   }
   const trackUris = extractSpotifyUris(messageText);
 
-
   function listContainsSpotifyUrls(props: any): boolean {
-
     const trackRegex = /https:\/\/open\.spotify\.com\/track\/[a-zA-Z0-9]+/g;
     const artistRegex = /https:\/\/open\.spotify\.com\/artist\/[a-zA-Z0-9]+/g;
     const albumRegex = /https:\/\/open\.spotify\.com\/album\/[a-zA-Z0-9]+/g;
@@ -144,32 +227,23 @@ function ChatMessage({message, messageId}: ChatMessageProps) {
       {message.messageType === MessageType.LLM && (
         <div className="pl-4 flex gap-2 pr-4">
           <div className="w-full">
-            
-            {/* Image without tracks */}
-            {trackUris.length === 0 && message.images && message.images.length > 0 && (
-              <div className="mb-4 grid grid-cols-1 gap-4">
-                {message.images.map((imageUrl, idx) => (
-                  <div key={idx} className="relative overflow-hidden flex justify-center items-center">
-                    <img 
-                      src={imageUrl}
-                      alt={`Generated image ${idx + 1}`}
-                      className="w-full h-auto object-cover max-w-xs rounded-lg"
-                      loading="lazy"
-                    />
-                  </div>
-                ))}
+
+            {/* Loading state for images */}
+            {imagesLoading && message.images && message.images.length > 0 && (
+              <div className="mb-4 flex justify-center items-center">
+                <Spinner />
               </div>
             )}
 
             {/* Image with tracks */}
             {trackUris.length > 0 && (
               <Card className="p-4 mb-4">
-                {message.images && message.images.length > 0 && (
+                {imageBlobUrls.length > 0 && (
                   <div className="mb-0 grid grid-cols-1 gap-4">
-                    {message.images.map((imageUrl, idx) => (
+                    {imageBlobUrls.map((blobUrl, idx) => (
                       <div key={idx} className="relative overflow-hidden flex justify-center items-center">
                         <img 
-                          src={imageUrl}
+                          src={blobUrl}
                           alt={`Generated image ${idx + 1}`}
                           className="w-full h-auto object-cover max-w-xs rounded-lg"
                           loading="lazy"
@@ -179,12 +253,19 @@ function ChatMessage({message, messageId}: ChatMessageProps) {
                   </div>
                 )}
                 
+                {/* Loading state for images with tracks */}
+                {imagesLoading && message.images && message.images.length > 0 && (
+                  <div className="mb-2 flex justify-center items-center">
+                    <Spinner />
+                  </div>
+                )}
+                
                 {/* Player */}
                 <SpotifyPlayer trackUris={trackUris} playlistId={messageId} />
               </Card>
             )}
 
-            {/* LLM mssage markdown */}
+            {/* LLM message markdown */}
             <Markdown remarkPlugins={[remarkGfm]} 
               components={{
                 a: ({node, ...props}) => (
@@ -197,6 +278,23 @@ function ChatMessage({message, messageId}: ChatMessageProps) {
                     onMouseLeave={e => (e.currentTarget.style.color = "#6b7280")}
                   />
                 ),
+                img: ({node, src, ...props}) => {
+                  // Use blob URL if available, otherwise use original src
+                  const imageSrc =
+                    typeof src === "string" && markdownImageBlobs[src]
+                      ? markdownImageBlobs[src]
+                      : src;
+                  return (
+                    <div className="flex justify-center items-center my-4">
+                      <img 
+                        {...props}
+                        src={imageSrc}
+                        className="w-full h-auto object-cover max-w-xs rounded-lg"
+                        loading="lazy"
+                      />
+                    </div>
+                  );
+                },
                 h1: ({node, ...props}) => (
                   <h1 style={{ fontSize: "2rem", fontWeight: "bold", margin: "1rem 0" }} {...props} />
                 ),
@@ -207,7 +305,6 @@ function ChatMessage({message, messageId}: ChatMessageProps) {
                   <h3 style={{ fontSize: "1.25rem", fontWeight: "600", margin: "0.5rem" }} {...props} />
                 ),
                 ul: ({node, ...props}) => {
-                  
                   return message.mode === "playlist" && listContainsSpotifyUrls(props) ? (
                     <Card className="mt-4 mb-4">
                       <CardContent className="pl-4 flex ml-2 mr-2">
@@ -219,7 +316,6 @@ function ChatMessage({message, messageId}: ChatMessageProps) {
                   );
                 },
                 ol: ({node, ...props}) => {
-                  
                   return message.mode === "playlist" && listContainsSpotifyUrls(props) ? (
                     <Card className="mt-4 mb-4">
                       <CardContent className="pl-4 flex ml-2 mr-2">
@@ -282,21 +378,42 @@ export default function Home() {
 
   const loadHistory = async (sid: string) => {
     try {
-      const response = await fetch(`${FAST_APP}/api/history/${sid}`);
-      if (response.ok) {
-        const data = await response.json();
-        const loadedMessages: Message[] = data.messages.map((msg: any, index: number) => ({
-          messageType: msg.role === 'user' ? MessageType.User : MessageType.LLM,
-          text: msg.content,
-          date: new Date(msg.timestamp),
-          images: msg.images || undefined,
-          mode: msg.mode || undefined, 
-          id: `${msg.role}-${msg.timestamp}-${index}`
-        }));
-        setChat(loadedMessages);
+      console.log('Loading history for session:', sid);
+      const response = await fetch(`${FAST_APP}/api/history/${sid}`, {
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+        }
+      });
+      
+      if (!response.ok) {
+        console.error('Response not OK:', response.status);
+        localStorage.removeItem('chat_session_id');
+        setSessionId(null);
+        return;
       }
+  
+      const data = await response.json();
+      
+      // Check if messages array is empty
+      if (!data.messages || data.messages.length === 0) {
+        console.log('No messages in history, starting fresh');
+        // Don't clear session - it exists but is just empty
+        return;
+      }
+  
+      const loadedMessages: Message[] = data.messages.map((msg: any, index: number) => ({
+        messageType: msg.role === 'user' ? MessageType.User : MessageType.LLM,
+        text: msg.content,
+        date: new Date(msg.timestamp),
+        images: msg.images || undefined,
+        mode: msg.mode || undefined, 
+        id: `${msg.role}-${msg.timestamp}-${index}`
+      }));
+      setChat(loadedMessages);
     } catch (err) {
       console.error('Failed to load history:', err);
+      localStorage.removeItem('chat_session_id');
+      setSessionId(null);
     }
   };
 
@@ -312,6 +429,7 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
         },
         body: JSON.stringify({
           message: agentText,
@@ -356,7 +474,7 @@ export default function Home() {
               }
             } else if (data.type === 'mode') {
               mode = data.mode;
-              setStreamingStatus(`${data.mode === "playlist" ? "Creating Playlist" : "Thinking"}`);
+              setStreamingStatus(`${data.mode === "playlist" ? "Creating your playlist" : "Thinking"}`);
             } else if (data.type === 'task_start') {
               setStreamingStatus(data.task);
             } else if (data.type === 'task_complete') {
@@ -388,6 +506,7 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
         },
         body: JSON.stringify({
           message: agentText,
@@ -579,6 +698,7 @@ export default function Home() {
           <div className="grid grid-cols-2 grid-rows-2 gap-4 mb-4 w-full auto-rows-fr">
             {defaultMessages.map((message, idx) => (
               <Button
+                key={idx}
                 variant="outline"
                 className={`border border-gray-300 p-4 rounded-lg w-full whitespace-pre-line transition-all h-full flex items-center justify-center`}
                 type="button"
