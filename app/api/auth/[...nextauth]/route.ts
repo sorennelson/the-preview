@@ -59,6 +59,12 @@ const handler = NextAuth({
     async session({ session, token }) {
       session.accessToken = typeof token.accessToken === "string" ? token.accessToken : undefined;
       session.error = typeof token.error === "string" ? token.error : undefined;
+      
+      // Add user ID from token
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
+      }
+      
       return session;
     },
   },
