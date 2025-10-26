@@ -33,7 +33,7 @@ export default function TextShuffle() {
     <p className="flex justify-center">
       Playlist creation for your next
       <span
-        className="inline-block transition-all duration-500 ml-1"
+        className="inline-block transition-all duration-500 ml-1.25"
         style={{ width }}
       >
         <span

@@ -30,17 +30,17 @@ const defaultMessages: Message[] = [
   },
   {
     messageType: MessageType.User,
-    text: "Make me a playlist for my trip to NYC. I like Jay-Z and podcasts like The Rewatchables.",
+    text: "Make me a playlist for my trip to NYC. I like podcasts like The Rewatchables.",
     date: new Date(),
   },
   {
     messageType: MessageType.User,
-    text: "What are the top movies this week?",
+    text: "Make a playlist for my next workout. Include artists like Travis Scott.",
     date: new Date(),
   },
   {
     messageType: MessageType.User,
-    text: "Create a playlist for the top movies this week.",
+    text: "Create a playlist for the top movie at the box office.",
     date: new Date(),
   },
 ];
@@ -342,7 +342,7 @@ export default function Home() {
 
   return (
     <div className="font-sans grid grid-rows-[auto_1fr_auto] items-center justify-items-center min-h-screen p-4 sm:p-8 md:p-12 ">
-      <main className="flex flex-col gap-8 row-start-2 items-center w-full max-w-screen-xl md:max-w-3xl sm:max-w-2xl sm:px-4">
+      <main className="flex flex-col gap-8 row-start-2 items-center w-full max-w-screen-xl sm:max-w-2xl sm:px-4 mb-8">
         {chat.length === 0 && !loading && (
           <div className="text-center text-gray-500 mt-8 w-full">
             <p className="text-lg mb-2">The Preview</p>
@@ -388,7 +388,7 @@ export default function Home() {
         )}
 
         {chat.length === 0 && !loading && (
-          <div className="grid grid-cols-2 gap-4 mb-4 w-full px-8">
+          <div className="grid grid-cols-2 gap-4 w-full sm:px-8">
             {defaultMessages.map((message, idx) => (
               <Button
                 key={idx}
@@ -406,7 +406,7 @@ export default function Home() {
       </main>
 
       <footer className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg">
-        <div className="mx-auto w-full max-w-screen-xl md:max-w-3xl sm:max-w-2xl px-4">
+        <div className="mx-auto w-full max-w-screen-xl sm:max-w-2xl px-4">
           <form
             className="flex justify-between w-full items-center gap-4 py-4"
             onSubmit={handleSubmit}
