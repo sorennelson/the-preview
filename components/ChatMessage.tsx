@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { CirclePlay } from 'lucide-react';
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -196,9 +196,9 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
 
             {/* Image with tracks */}
             {trackUris.length > 0 && (
-              <Card className="p-4 mb-4">
+              <Card className="py-4 px-0 mb-4">
                 {imageBlobUrls.length > 0 && (
-                  <div className="mb-0 grid grid-cols-1 gap-4">
+                  <div className="mb-0 grid grid-cols-1 gap-4 px-4">
                     {imageBlobUrls.map((blobUrl, idx) => (
                       <div key={idx} className="relative overflow-hidden flex justify-center items-center">
                         <img 
@@ -211,16 +211,19 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                     ))}
                   </div>
                 )}
+                <CardFooter className="!pt-4 border-t border-gray-200/05 justify-center">
+                  {/* Loading state for images with tracks */}
+                  {imagesLoading && message.images && message.images.length > 0 && (
+                    <div className="mb-2 flex justify-center items-center">
+                      <Spinner />
+                    </div>
+                  )}
+                  
+                  {/* Player */}
+                  <SpotifyPlayer trackUris={trackUris} playlistId={messageId} />
+                </CardFooter>
                 
-                {/* Loading state for images with tracks */}
-                {imagesLoading && message.images && message.images.length > 0 && (
-                  <div className="mb-2 flex justify-center items-center">
-                    <Spinner />
-                  </div>
-                )}
                 
-                {/* Player */}
-                <SpotifyPlayer trackUris={trackUris} playlistId={messageId} />
               </Card>
             )}
 

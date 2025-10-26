@@ -343,7 +343,7 @@ export default function Home() {
   return (
     <div className="font-sans grid grid-rows-[auto_1fr_auto] items-center justify-items-center min-h-screen p-8 pb-20 gap-4 sm:p-20">
       
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start xl:max-w-2/5 md:max-w-2/3 w-full overflow-y-auto">
+      <main className="flex flex-col gap-[32px] row-start-2 items-center xl:max-w-1/2 lg:max-w-2/3 md:max-w-5/6 w-full overflow-y-auto">
         {chat.length === 0 && !loading && (
           <div className="text-center text-gray-500 mt-8 w-full">
             <p className="text-lg mb-2">The Preview</p>
@@ -410,12 +410,12 @@ export default function Home() {
 
       </main>
 
-      <footer className="row-start-3 w-full px-4 md:px-0 xl:max-w-2/5 md:max-w-2/3 mx-auto p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky bottom-0 shadow-lg">
+      <footer className="fixed bottom-0 w-full px-8 md:px-16 lg:px-12 xl:px-10 pb-0 pt-4 xl:max-w-1/2 lg:max-w-2/3 md:max-w-5/6 items-center bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg">
 
-        <form className="flex justify-between w-full items-center gap-4" onSubmit={handleSubmit}>
+        <form className="flex justify-between w-full items-center gap-4 pb-8" onSubmit={handleSubmit}>
           <Textarea 
             className="flex-1 min-h-[40px] resize-none" 
-            placeholder="Type your message or request a playlist..." 
+            placeholder="Request a playlist..." 
             rows={1}
             disabled={loading}
             onInput={(e) => {
