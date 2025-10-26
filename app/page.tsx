@@ -341,16 +341,15 @@ export default function Home() {
   }
 
   return (
-    <div className="font-sans grid grid-rows-[auto_1fr_auto] items-center justify-items-center min-h-screen p-8 pb-20 gap-4 sm:p-20">
-      
-      <main className="flex flex-col gap-[32px] row-start-2 items-center xl:max-w-1/2 lg:max-w-2/3 md:max-w-5/6 w-full overflow-y-auto">
+    <div className="font-sans grid grid-rows-[auto_1fr_auto] items-center justify-items-center min-h-screen p-4 sm:p-8 md:p-12 ">
+      <main className="flex flex-col gap-8 row-start-2 items-center w-full max-w-screen-xl md:max-w-3xl sm:max-w-2xl sm:px-4">
         {chat.length === 0 && !loading && (
           <div className="text-center text-gray-500 mt-8 w-full">
             <p className="text-lg mb-2">The Preview</p>
             <TextShuffle />
           </div>
         )}
-        
+
         <ul className="w-full">
           {chat.map((message, idx) => {
             const messageId = message.id || `message-${idx}`;
@@ -362,43 +361,40 @@ export default function Home() {
           })}
         </ul>
 
-        
         {loading && (
           <>
-            {streamingStatus && streamingStatus === "Thinking" && (
-              <div className="w-full flex justify-center">
+            {streamingStatus === "Thinking" && (
+              <div className="w-full flex justify-center items-center gap-2">
                 <Spinner />
-                <div className="flex items-center gap-2 pl-2">
-                  <p className="text-sm text-muted-foreground animate-pulse m-0">
-                    {streamingStatus}
-                  </p>
-                </div>
+                <p className="text-sm text-muted-foreground animate-pulse">{streamingStatus}</p>
               </div>
             )}
             {streamingStatus && streamingStatus !== "Thinking" && (
               <>
                 <div className="flex justify-center w-full">
-                  <p className="text-sm text-muted-foreground animate-pulse m-0 ">
+                  <p className="text-sm text-muted-foreground animate-pulse">
                     {streamingStatus} - This may take a few minutes
                   </p>
                 </div>
-                <Progress value={getPlaylistState[streamingStatus]*100/Object.keys(getPlaylistState).length} />
+                <Progress
+                  value={
+                    (getPlaylistState[streamingStatus] * 100) /
+                    Object.keys(getPlaylistState).length
+                  }
+                />
               </>
             )}
           </>
         )}
-        
+
         {chat.length === 0 && !loading && (
-          <div className="grid grid-cols-2 grid-rows-2 gap-4 mb-4 w-full auto-rows-fr">
+          <div className="grid grid-cols-2 gap-4 mb-4 w-full px-8">
             {defaultMessages.map((message, idx) => (
               <Button
                 key={idx}
                 variant="outline"
-                className={`border border-gray-300 p-4 rounded-lg w-full whitespace-pre-line transition-all h-full flex items-center justify-center`}
-                type="button"
-                onClick={() => {
-                  handleSubmitExample(message);
-                }}
+                className="border border-gray-300 p-4 rounded-lg w-full whitespace-pre-line transition-all h-full flex items-center justify-center"
+                onClick={() => handleSubmitExample(message)}
               >
                 {message.text}
               </Button>
@@ -407,40 +403,38 @@ export default function Home() {
         )}
 
         <div ref={messagesEndRef} />
-
       </main>
 
-      <footer className="fixed bottom-0 w-full px-8 md:px-16 lg:px-12 xl:px-10 pb-0 pt-4 xl:max-w-1/2 lg:max-w-2/3 md:max-w-5/6 items-center bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg">
-
-        <form className="flex justify-between w-full items-center gap-4 pb-8" onSubmit={handleSubmit}>
-          <Textarea 
-            className="flex-1 min-h-[40px] resize-none" 
-            placeholder="Request a playlist..." 
-            rows={1}
-            disabled={loading}
-            onInput={(e) => {
-              const target = e.target as HTMLTextAreaElement;
-              target.style.height = 'auto';
-              const newHeight = Math.min(target.scrollHeight, 200); // Max height
-              target.style.height = newHeight + 'px';
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                e.currentTarget.form?.requestSubmit();
-              }
-            }}
-          />
-          <Button 
-            type="submit" 
-            variant="outline"
-            className="bg-background"
-            disabled={loading}
+      <footer className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg">
+        <div className="mx-auto w-full max-w-screen-xl md:max-w-3xl sm:max-w-2xl px-4">
+          <form
+            className="flex justify-between w-full items-center gap-4 py-4"
+            onSubmit={handleSubmit}
           >
-            <ArrowUp />
-          </Button>
-        </form>
+            <Textarea
+              className="flex-1 min-h-[40px] resize-none"
+              placeholder="Request a playlist..."
+              rows={1}
+              disabled={loading}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = "auto";
+                target.style.height = Math.min(target.scrollHeight, 200) + "px";
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  e.currentTarget.form?.requestSubmit();
+                }
+              }}
+            />
+            <Button type="submit" variant="outline" className="bg-background" disabled={loading}>
+              <ArrowUp />
+            </Button>
+          </form>
+        </div>
       </footer>
     </div>
+
   );
 }
