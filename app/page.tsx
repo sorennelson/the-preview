@@ -9,7 +9,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { signIn, useSession } from "next-auth/react";
 import TextShuffle from "@/components/TextShuffle";
 import { Progress } from "@/components/ui/progress";
-import { ChatMessage, Message, MessageType } from "@/components/ChatMessage";
+import { ChatMessage } from "@/components/ChatMessage";
+import { Message, MessageType } from "@/types/Message";
 
 const FAST_APP = process.env.NEXT_PUBLIC_FAST_APP;
 
@@ -49,14 +50,18 @@ export default function Home() {
   const [chat, setChat] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [streamingStatus, setStreamingStatus] = useState<string>("");
   const [enableStreaming, setEnableStreaming] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { data: session } = useSession()
+  const { data: session } = useSession();
 
   // Load session ID from Spotify account and history on mount
   useEffect(() => {
+    if (session?.accessToken) {
+      setAccessToken(session?.accessToken);
+    }
     if (session?.user?.id) {
       const spotifyUserId = session.user.id;
       setSessionId(spotifyUserId);
@@ -107,6 +112,7 @@ export default function Home() {
         mode: msg.mode || undefined, 
         id: `${msg.role}-${msg.timestamp}-${index}`
       }));
+      console.log(`loadedMessages`, loadedMessages);
       setChat(loadedMessages);
     } catch (err) {
       console.error('Failed to load history:', err);
@@ -131,6 +137,7 @@ export default function Home() {
         body: JSON.stringify({
           message: agentText,
           session_id: sessionId,
+          spotify_user_token: accessToken,
           mode: 'auto',
           stream: true
         }),

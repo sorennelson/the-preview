@@ -8,20 +8,8 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Spinner } from "@/components/ui/spinner";
 import SpotifyPlayer from "@/components/SpotifyPlayer";
+import { Message, MessageType } from "@/types/Message";
 
-export enum MessageType {
-  User = "user",
-  LLM = "llm"
-}
-
-export interface Message {
-  messageType: MessageType;
-  text: string;
-  date: Date;
-  images?: string[];  // Array of image URLs
-  mode?: string;
-  id?: string;  // Add unique ID for tracking
-}
 
 interface ChatMessageProps {
   message: Message;
@@ -172,13 +160,13 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
   return (
     <>
       {/* User message */}
- {message.messageType === MessageType.User && (
+      {message.messageType === MessageType.User && (
         <Card className="pt-4 pb-4">
           <CardContent className="pl-4 flex gap-2">
             <div>
               <CirclePlay className="h-5 w-5" />
             </div>
-            <Label className="whitespace-pre-line leading-relaxed">{messageText}</Label>
+            <Label className="whitespace-pre-line leading-relaxed select-text">{messageText}</Label>
           </CardContent>
         </Card>
       )}

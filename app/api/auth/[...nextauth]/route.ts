@@ -41,7 +41,7 @@ const handler = NextAuth({
       clientId: process.env.AUTH_SPOTIFY_ID!,
       clientSecret: process.env.AUTH_SPOTIFY_SECRET!,
       authorization:
-        "https://accounts.spotify.com/authorize?scope=user-read-email,user-read-private,user-read-playback-state,user-modify-playback-state,streaming",
+        "https://accounts.spotify.com/authorize?scope=user-read-email,user-read-private,user-top-read,user-library-read,playlist-read-private,user-read-playback-state,user-modify-playback-state,streaming",
     }),
   ],
   callbacks: {
