@@ -185,31 +185,47 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
             {/* Image with tracks */}
             {trackUris.length > 0 && (
               <Card className="py-4 px-0 mb-4">
-                {imageBlobUrls.length > 0 && (
-                  <div className="mb-0 grid grid-cols-1 gap-4 px-4">
-                    {imageBlobUrls.map((blobUrl, idx) => (
-                      <div key={idx} className="relative overflow-hidden flex justify-center items-center">
-                        <img 
-                          src={blobUrl}
-                          alt={`Generated image ${idx + 1}`}
-                          className="w-full h-auto object-cover max-w-xs rounded-lg"
-                          loading="lazy"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <CardFooter className="!pt-4 border-t border-gray-200/05 justify-center">
-                  {/* Loading state for images with tracks */}
-                  {imagesLoading && message.images && message.images.length > 0 && (
-                    <div className="mb-2 flex justify-center items-center">
-                      <Spinner />
+                {imageBlobUrls.length > 0 ? (
+                  <>
+                    <div className="mb-0 grid grid-cols-1 gap-4 px-4">
+                      {imageBlobUrls.map((blobUrl, idx) => (
+                        <div key={idx} className="relative overflow-hidden flex justify-center items-center">
+                          <img 
+                            src={blobUrl}
+                            alt={`Generated image ${idx + 1}`}
+                            className="w-full h-auto object-cover max-w-xs rounded-lg"
+                            loading="lazy"
+                          />
+                        </div>
+                      ))}
                     </div>
-                  )}
+                    <CardFooter className="!pt-4 border-t border-gray-200/05 justify-center">
+
+                      {/* Loading state for images with tracks */}
+                      {imagesLoading && message.images && message.images.length > 0 && (
+                        <div className="mb-2 flex justify-center items-center">
+                          <Spinner />
+                        </div>
+                      )}
+                      {/* Player */}
+                      <SpotifyPlayer trackUris={trackUris} playlistId={messageId} />
+                  </CardFooter>
+                  </>
                   
-                  {/* Player */}
-                  <SpotifyPlayer trackUris={trackUris} playlistId={messageId} />
-                </CardFooter>
+                ) : (
+                  <CardFooter className="!pt-4 border-t border-gray-200/05 justify-center">
+                      {/* Loading state for images with tracks */}
+                      {imagesLoading && message.images && message.images.length > 0 && (
+                        <div className="mb-2 flex justify-center items-center">
+                          <Spinner />
+                        </div>
+                      )}
+                      {/* Player */}
+                      <SpotifyPlayer trackUris={trackUris} playlistId={messageId} />
+                  </CardFooter>
+                )
+                }
+                
                 
                 
               </Card>
