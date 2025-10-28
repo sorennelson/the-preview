@@ -200,7 +200,6 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                       ))}
                     </div>
                     <CardFooter className="!pt-4 border-t border-gray-200/05 justify-center">
-
                       {/* Loading state for images with tracks */}
                       {imagesLoading && message.images && message.images.length > 0 && (
                         <div className="mb-2 flex justify-center items-center">
@@ -213,7 +212,7 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                   </>
                   
                 ) : (
-                  <CardFooter className="!pt-4 border-t border-gray-200/05 justify-center">
+                  <div className="pt-4 justify-center">
                       {/* Loading state for images with tracks */}
                       {imagesLoading && message.images && message.images.length > 0 && (
                         <div className="mb-2 flex justify-center items-center">
@@ -222,7 +221,7 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                       )}
                       {/* Player */}
                       <SpotifyPlayer trackUris={trackUris} playlistId={messageId} />
-                  </CardFooter>
+                  </div>
                 )
                 }
                 
