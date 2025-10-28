@@ -255,7 +255,7 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                   <h3 style={{ fontSize: "1.25rem", fontWeight: "600", margin: "0.5rem" }} {...props} />
                 ),
                 ul: ({node, ...props}) => {
-                  return message.mode === "playlist" && listContainsSpotifyUrls(props) ? (
+                  return listContainsSpotifyUrls(props) ? (
                     <Card className="mt-4 mb-4">
                       <CardContent className="pl-4 flex ml-2 mr-2">
                         <ul style={{ listStyleType: "disc", marginLeft: "1.5rem" }} {...props} />
@@ -266,7 +266,7 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                   );
                 },
                 ol: ({node, ...props}) => {
-                  return message.mode === "playlist" && listContainsSpotifyUrls(props) ? (
+                  return listContainsSpotifyUrls(props) ? (
                     <Card className="mt-4 mb-4">
                       <CardContent className="pl-4 flex ml-2 mr-2">
                         <ol style={{ listStyleType: "decimal", marginLeft: "1.5rem"}} {...props} />
