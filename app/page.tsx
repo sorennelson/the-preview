@@ -36,7 +36,7 @@ const defaultMessages: Message[] = [
   },
   {
     messageType: MessageType.User,
-    text: "Make a playlist for my next workout. Include artists like Travis Scott.",
+    text: "Make a playlist for my next workout. Use my favorite artists for inspiration.",
     date: new Date(),
   },
   {

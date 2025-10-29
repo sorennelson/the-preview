@@ -42,9 +42,6 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
   const [paused, setPaused] = useState(true);
   const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(null);
   const [trackIndex, setTrackIndex] = useState<number | null>(null);
-  const currentQueueRef = useRef<string[]>([]);
-  const lastPosRef = useRef(0);
-  const lastPausedRef = useRef(true);
 
   const initializingRef = useRef(false);
 
@@ -57,25 +54,6 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
     script.onerror = () => setError("Failed to load Spotify SDK");
     document.body.appendChild(script);
   }, []);
-
-  // useEffect(() => {
-  //   if (!player) return;
-  //   const interval = setInterval(async () => {
-  //     const state = await player.getCurrentState();
-  //     if (!state) return;
-  
-  //     const { position, duration, paused } = state;
-  //     const wasPlaying = !lastPausedRef.current;
-  //     const nearEndBefore = lastPosRef.current >= duration - 2000; // within 2 s
-  //     const nowPaused = paused && wasPlaying && nearEndBefore;
-
-  //     if (nowPaused) nextTrack(currentQueueRef.current);
-
-  //     lastPosRef.current = position;
-  //     lastPausedRef.current = paused;
-  //   }, 500);
-  //   return () => clearInterval(interval);
-  // }, [player]);
 
   // init player
   useEffect(() => {
@@ -138,19 +116,11 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
   // full playback call with queue
   const playTracks = async (trackUris: string[], startIndex = 0) => {
     if (!deviceId || !accessToken) return;
-    
-    console.log("deviceId", deviceId);
 
     // Set track index for the frontend
-    currentQueueRef.current = trackUris;
     setTrackIndex(startIndex);
 
     const tryPlayTrack = async (index: number): Promise<void> => {
-      if (index >= trackUris.length) {
-        setError("No more tracks to play");
-        return;
-      }
-
       const trackUri = trackUris[index];
       
       try {
