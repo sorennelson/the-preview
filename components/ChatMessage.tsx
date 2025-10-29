@@ -366,8 +366,6 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                     playTracks(trackUris, currentIndex);
                     setPlayingIndex(currentIndex);
                   };
-
-                  console.log("paused", playingIndex);
                 
                   return isSpotifyItem ? (
                     <li
@@ -382,7 +380,7 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                       onClick={handleTrackClick}
                       {...rawProps}
                     >
-                      {currentIndex !== playingIndex ? (
+                      {currentIndex !== playingIndex || currentIndex === -1 ? (
                         <Play
                           className="flex-shrink-0 h-4 w-4"
                           style={{ color: "#6b7280" }}
