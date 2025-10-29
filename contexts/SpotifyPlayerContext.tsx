@@ -44,6 +44,7 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
   const [trackIndex, setTrackIndex] = useState<number | null>(null);
 
   const initializingRef = useRef(false);
+  const queueRef = useRef<string[]>([]);
 
   // preload SDK
   useEffect(() => {
@@ -91,6 +92,17 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
             name: current.name,
             artist: current.artists.map((a: any) => a.name).join(", "),
           });
+
+          // find index in current queue
+          const uri = current.uri;
+          const queue = queueRef.current;
+
+          if (queue && uri) {
+            const newIndex = queue.findIndex((trackUri) => trackUri === uri);
+            if (newIndex !== -1) {
+              setTrackIndex(newIndex);
+            }
+          }
         }
       });
 
@@ -121,7 +133,9 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
     setTrackIndex(startIndex);
 
     const tryPlayTrack = async (index: number): Promise<void> => {
-      const trackUri = trackUris[index];
+      
+      const slice = trackUris.slice(index);
+      queueRef.current = trackUris;
       
       try {
         // ensure device active
@@ -134,6 +148,14 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
           body: JSON.stringify({ device_ids: [deviceId], play: false }),
         });
 
+        // disable shuffle
+        await fetch(`https://api.spotify.com/v1/me/player/shuffle?state=false&device_id=${deviceId}`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
         // start playback with current track
         const res = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
           method: "PUT",
@@ -141,7 +163,7 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ uris: [trackUri] }),
+          body: JSON.stringify({ uris: slice }),
         });
 
         if (!res.ok) {
