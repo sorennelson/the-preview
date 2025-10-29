@@ -53,7 +53,7 @@ export default function Home() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [streamingStatus, setStreamingStatus] = useState<string>("");
   const [enableStreaming, setEnableStreaming] = useState(true);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  // const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: session } = useSession();
 
@@ -69,16 +69,16 @@ export default function Home() {
     }
   }, [session]);
 
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    // Use a small timeout to ensure DOM has updated
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ 
-        behavior: 'auto', // Use 'auto' instead of 'smooth' for iOS
-        block: 'end' 
-      });
-    }, 100);
-  }, [chat]);
+  // // Auto-scroll to bottom when new messages arrive
+  // useEffect(() => {
+  //   // Use a small timeout to ensure DOM has updated
+  //   setTimeout(() => {
+  //     messagesEndRef.current?.scrollIntoView({ 
+  //       behavior: 'auto', // Use 'auto' instead of 'smooth' for iOS
+  //       block: 'end' 
+  //     });
+  //   }, 100);
+  // }, [chat]);
 
   const loadHistory = async (sid: string) => {
     try {
@@ -409,7 +409,7 @@ export default function Home() {
           </div>
         )}
 
-        <div ref={messagesEndRef} />
+        {/* <div ref={messagesEndRef} /> */}
       </main>
 
       <footer className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg">

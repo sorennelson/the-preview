@@ -42,6 +42,9 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
   const [paused, setPaused] = useState(true);
   const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(null);
   const [trackIndex, setTrackIndex] = useState<number | null>(null);
+  const currentQueueRef = useRef<string[]>([]);
+  const lastPosRef = useRef(0);
+  const lastPausedRef = useRef(true);
 
   const initializingRef = useRef(false);
 
@@ -54,6 +57,25 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
     script.onerror = () => setError("Failed to load Spotify SDK");
     document.body.appendChild(script);
   }, []);
+
+  // useEffect(() => {
+  //   if (!player) return;
+  //   const interval = setInterval(async () => {
+  //     const state = await player.getCurrentState();
+  //     if (!state) return;
+  
+  //     const { position, duration, paused } = state;
+  //     const wasPlaying = !lastPausedRef.current;
+  //     const nearEndBefore = lastPosRef.current >= duration - 2000; // within 2 s
+  //     const nowPaused = paused && wasPlaying && nearEndBefore;
+
+  //     if (nowPaused) nextTrack(currentQueueRef.current);
+
+  //     lastPosRef.current = position;
+  //     lastPausedRef.current = paused;
+  //   }, 500);
+  //   return () => clearInterval(interval);
+  // }, [player]);
 
   // init player
   useEffect(() => {
@@ -116,46 +138,79 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
   // full playback call with queue
   const playTracks = async (trackUris: string[], startIndex = 0) => {
     if (!deviceId || !accessToken) return;
-    // const tail = trackUris.slice(startIndex);
-    const tail = [trackUris[startIndex]];
-    // console.log(tail);
+    
+    console.log("deviceId", deviceId);
 
     // Set track index for the frontend
-    if (trackIndex === null) {
-      setTrackIndex(startIndex);
-    }
+    currentQueueRef.current = trackUris;
+    setTrackIndex(startIndex);
 
-    try {
-      // ensure device active
-      await fetch("https://api.spotify.com/v1/me/player", {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ device_ids: [deviceId], play: false }),
-      });
+    const tryPlayTrack = async (index: number): Promise<void> => {
+      if (index >= trackUris.length) {
+        setError("No more tracks to play");
+        return;
+      }
 
-      // start playback with tail of list
-      const res = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ uris: tail }),
-      });
+      const trackUri = trackUris[index];
+      
+      try {
+        // ensure device active
+        await fetch("https://api.spotify.com/v1/me/player", {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ device_ids: [deviceId], play: false }),
+        });
 
-      if (!res.ok) setError(await res.text());
-      else setError(null);
-    } catch (err) {
-      setError(String(err));
-    }
+        // start playback with current track
+        const res = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ uris: [trackUri] }),
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.log(`Track ${index} failed, skipping to next:`, errorText);
+
+          // If we're at the final index, don't continue further
+          if (index + 1 >= trackUris.length) {
+            setError("No more tracks to play");
+            return;
+          }
+          
+          // Update track index and try next track
+          setTrackIndex(index + 1);
+          await tryPlayTrack(index + 1);
+        } else {
+          setError(null);
+        }
+      } catch (err) {
+        console.log(`Track ${index} error, skipping to next:`, err);
+
+        // If we're at the final index, don't continue further
+        if (index + 1 >= trackUris.length) {
+          setError("No more tracks to play");
+          return;
+        }
+        
+        // Update track index and try next track
+        setTrackIndex(index + 1);
+        await tryPlayTrack(index + 1);
+      }
+    };
+
+    await tryPlayTrack(startIndex);
   };
 
   const togglePlay = (trackUris: string[]) => {
+    setPaused(!paused);
     player?.togglePlay();
-    // playTracks(trackUris, trackIndex || 0);
   };
   const nextTrack = (trackUris: string[]) => {
     // player?.nextTrack();

@@ -19,7 +19,7 @@ interface ChatMessageProps {
 }
 
 export function ChatMessage({message, messageId}: ChatMessageProps) {
-  const { playTracks, trackIndex, paused } = useSpotifyPlayer();
+  const { playTracks, trackIndex, paused, currentPlayingId } = useSpotifyPlayer();
   const [imageBlobUrls, setImageBlobUrls] = useState<string[]>([]);
   const [imagesLoading, setImagesLoading] = useState(false);
   const [markdownImageBlobs, setMarkdownImageBlobs] = useState<Record<string, string>>({});
@@ -37,7 +37,7 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
   }
 
   useEffect(() => {
-    setPlayingIndex(trackIndex || -1);
+    setPlayingIndex(trackIndex ?? -1);
   }, [trackIndex])
 
   // Load images with ngrok-skip-browser-warning header
@@ -380,7 +380,7 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                       onClick={handleTrackClick}
                       {...rawProps}
                     >
-                      {currentIndex !== playingIndex || currentIndex === -1 ? (
+                      {currentIndex !== playingIndex || currentIndex === -1 || paused || messageId !== currentPlayingId  ? (
                         <Play
                           className="flex-shrink-0 h-4 w-4"
                           style={{ color: "#6b7280" }}
