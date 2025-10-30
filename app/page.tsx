@@ -83,6 +83,7 @@ export default function Home() {
   const loadHistory = async (sid: string) => {
     try {
       console.log('Loading history for session:', sid);
+      console.log("Access token:", accessToken);
       const response = await fetch(`${FAST_APP}/api/history/${sid}`, {
         headers: {
           'ngrok-skip-browser-warning': 'true',
