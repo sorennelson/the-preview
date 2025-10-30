@@ -349,7 +349,7 @@ export default function Home() {
 
   return (
     <div className="font-sans grid grid-rows-[auto_1fr_auto] items-center justify-items-center min-h-screen p-4 sm:p-8 md:p-12 ">
-      <main className="flex flex-col gap-8 row-start-2 items-center w-full max-w-screen-xl sm:max-w-2xl sm:px-4 mb-16">
+      <main className="flex flex-col gap-8 row-start-2 items-center w-full max-w-screen-xl sm:max-w-2xl sm:px-4 mb-24">
         {chat.length === 0 && !loading && (
           <div className="text-center text-gray-500 mt-8 w-full">
             <p className="text-lg mb-2">The Preview</p>

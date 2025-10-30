@@ -143,23 +143,11 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
     const showRegex = /https:\/\/open\.spotify\.com\/show\/[a-zA-Z0-9]+/g;
 
     for (const item in props.children) {
-      if (
-        props.children &&
-        props.children[item] &&
-        props.children[item].props &&
-        props.children[item].props.hasOwnProperty('children') &&
-        props.children[item].props.children.props.hasOwnProperty("href") &&
-          (
-            trackRegex.test(props.children[item].props.children.props.href) || 
-            artistRegex.test(props.children[item].props.children.props.href) ||
-            albumRegex.test(props.children[item].props.children.props.href) ||
-            podRegex.test(props.children[item].props.children.props.href) ||
-            showRegex.test(props.children[item].props.children.props.href)
-          )
-      )  
-      {
+      const href = props.children?.[item]?.props?.children?.props?.href;
+      if (href && (trackRegex.test(href) || artistRegex.test(href) || albumRegex.test(href) || podRegex.test(href) || showRegex.test(href))) {
         return true;
       }
+
     }
 
     return false;
