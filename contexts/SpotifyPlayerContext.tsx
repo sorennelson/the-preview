@@ -131,11 +131,11 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
 
     // Set track index for the frontend
     setTrackIndex(startIndex);
+    queueRef.current = trackUris;
 
     const tryPlayTrack = async (index: number): Promise<void> => {
       
       const slice = trackUris.slice(index);
-      queueRef.current = trackUris;
       
       try {
         // ensure device active
