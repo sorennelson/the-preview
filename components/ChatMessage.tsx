@@ -149,7 +149,6 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
       }
 
     }
-
     return false;
   }
 
@@ -325,24 +324,32 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                     )
                     .join(" ")
                     .trim();
-                
-                  const isSpotifyItem = href !== null && href !== undefined;
+
+                  const isSpotifyItemCheck = (url: string): boolean => {
+                    const trackRegex = /https:\/\/open\.spotify\.com\/track\/[a-zA-Z0-9]+/g;
+                    const artistRegex = /https:\/\/open\.spotify\.com\/artist\/[a-zA-Z0-9]+/g;
+                    const albumRegex = /https:\/\/open\.spotify\.com\/album\/[a-zA-Z0-9]+/g;
+                    const podRegex = /https:\/\/open\.spotify\.com\/episode\/[a-zA-Z0-9]+/g;
+                    const showRegex = /https:\/\/open\.spotify\.com\/show\/[a-zA-Z0-9]+/g;
+                    return trackRegex.test(url) || artistRegex.test(url) || albumRegex.test(url) || podRegex.test(url) || showRegex.test(url)
+                  }
                 
                   const extractSpotifyUri = (url: string): string | null => {
                     const trackMatch = url.match(/https:\/\/open\.spotify\.com\/track\/([a-zA-Z0-9]+)/);
                     if (trackMatch) return `spotify:track:${trackMatch[1]}`;
                     
                     const episodeMatch = url.match(/https:\/\/open\.spotify\.com\/episode\/([a-zA-Z0-9]+)/);
-                    if (episodeMatch) return `spotify:episode:${episodeMatch[1]}`;
-                    
+                    if (episodeMatch) return `spotify:episode:${episodeMatch[1]}`;                    
                     return null;
                   };
 
                   // Extract the uri and index of the uri
                   let uri: string | null = null;
                   let currentIndex: number = -1;
-                  if (isSpotifyItem) {
+                  let isSpotifyItem = false;
+                  if (href !== null && href !== undefined) {
                     uri = extractSpotifyUri(href);
+                    isSpotifyItem = isSpotifyItemCheck(href);
                     if (uri) {
                       currentIndex = trackUris.findIndex((trackUri) => trackUri === uri);
                     }
