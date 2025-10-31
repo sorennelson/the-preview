@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { SpotifyPlayerProvider } from "@/contexts/SpotifyPlayerContext";
+import { SpotifyEmbedProvider } from "@/contexts/SpotifyPlayerContext";
 import Providers from "@/components/SessionProvider";
 
 const geistSans = Geist({
@@ -30,7 +30,7 @@ export default function RootLayout({
         className={`antialiased`}
       >
         <Providers>
-          <SpotifyPlayerProvider>{children}</SpotifyPlayerProvider>
+          <SpotifyEmbedProvider>{children}</SpotifyEmbedProvider>
         </Providers>
       </body>
     </html>

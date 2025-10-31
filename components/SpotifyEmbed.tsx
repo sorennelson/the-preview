@@ -1,0 +1,160 @@
+"use client";
+
+import { useRef, useState, useEffect } from 'react';
+import { useSpotifyEmbed } from '@/contexts/SpotifyPlayerContext';
+import { useSession } from 'next-auth/react';
+
+declare global {
+  interface Window {
+    onSpotifyIframeApiReady: (IFrameAPI: any) => void;
+    Spotify?: any;
+  }
+}
+
+export default function SpotifyEmbed() {
+  const { data: session } = useSession();
+  const accessToken = (session as any)?.accessToken;
+  
+  const embedRef = useRef<HTMLDivElement>(null);
+  const [iFrameAPI, setIFrameAPI] = useState<any>(undefined);
+  const [isMounted, setIsMounted] = useState(false);
+  const controllerRef = useRef<any>(null);
+  
+  const { setController, setPaused, trackIndex, currentTrackUris, currentPlayingId } = useSpotifyEmbed();
+
+  const currentUri = currentTrackUris && trackIndex !== null && trackIndex >= 0 
+    ? currentTrackUris[trackIndex] 
+    : null;
+
+  console.log('SpotifyEmbed render:', { 
+    currentPlayingId, 
+    currentUri, 
+    trackIndex, 
+    hasController: !!controllerRef.current,
+    isMounted 
+  });
+
+  // Only render on client side
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Load Spotify Iframe API script
+  useEffect(() => {
+    if (!isMounted) return;
+    
+    const existingScript = document.querySelector('script[src="https://open.spotify.com/embed/iframe-api/v1"]');
+    
+    if (existingScript) {
+      if (window.Spotify) {
+        console.log('Using existing Spotify API');
+        setIFrameAPI(window.Spotify);
+      }
+      return;
+    }
+
+    console.log('Loading Spotify IFrame API script');
+    const script = document.createElement("script");
+    script.src = "https://open.spotify.com/embed/iframe-api/v1";
+    script.async = true;
+    document.body.appendChild(script);
+  }, [isMounted]);
+
+  // Wait for API to be ready
+  useEffect(() => {
+    if (!isMounted || iFrameAPI) return;
+
+    window.onSpotifyIframeApiReady = (SpotifyIframeApi: any) => {
+      console.log('Spotify IFrame API Ready callback');
+      setIFrameAPI(SpotifyIframeApi);
+    };
+  }, [iFrameAPI, isMounted]);
+
+  // Create/update controller
+  useEffect(() => {
+    if (!isMounted || !iFrameAPI || !embedRef.current || !currentUri) {
+      console.log('Skipping controller creation:', { 
+        isMounted, 
+        hasAPI: !!iFrameAPI, 
+        hasRef: !!embedRef.current, 
+        currentUri 
+      });
+      return;
+    }
+
+    // If controller exists, just update the URI
+    if (controllerRef.current) {
+      console.log('Updating existing controller with URI:', currentUri);
+      controllerRef.current.loadUri(currentUri);
+      return;
+    }
+
+    // Create new controller
+    console.log('Creating new controller with URI:', currentUri);
+
+    const options: any = {
+      width: "100%",
+      height: "152",
+      uri: currentUri,
+    };
+
+    if (accessToken) {
+      options.getOAuthToken = (callback: (token: string) => void) => {
+        callback(accessToken);
+      };
+    }
+
+    iFrameAPI.createController(
+      embedRef.current,
+      options,
+      (newController: any) => {
+        console.log('Controller created successfully');
+        controllerRef.current = newController;
+        
+        newController.addListener("ready", () => {
+          console.log('Player ready');
+          setController(newController);
+        });
+
+        newController.addListener("playback_update", (e: any) => {
+          const { isPaused } = e.data;
+          setPaused(isPaused);
+        });
+
+        newController.addListener("error", (e: any) => {
+          console.error('Embed player error:', e);
+        });
+      }
+    );
+  }, [iFrameAPI, setController, setPaused, currentUri, isMounted, accessToken]);
+
+  const convertUriToEmbedUrl = (spotifyUri: string) => {
+    if (spotifyUri.startsWith("spotify:")) {
+      const parts = spotifyUri.split(":");
+      return `https://open.spotify.com/embed/${parts[1]}/${parts[2]}`;
+    }
+    if (spotifyUri.includes("open.spotify.com")) {
+      return spotifyUri.replace("open.spotify.com/", "open.spotify.com/embed/");
+    }
+    return "";
+  };
+
+  // Always render the container once mounted
+  if (!isMounted) {
+    return null;
+  }
+
+  // Show placeholder when no track is selected
+  if (!currentPlayingId || !currentUri) {
+    return null;
+  }
+
+  return (
+    <div className="w-full mx-auto relative">
+      <div 
+        ref={embedRef} 
+        className="rounded-xl overflow-hidden min-h-[152px]"
+      />
+    </div>
+  );
+}

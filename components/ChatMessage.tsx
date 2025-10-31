@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CirclePlay, Pause, Play } from 'lucide-react';
+import { CirclePlay, AudioLines, Play } from 'lucide-react';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Spinner } from "@/components/ui/spinner";
 import SpotifyPlayer from "@/components/SpotifyPlayer";
-import { useSpotifyPlayer } from "@/contexts/SpotifyPlayerContext";
+import { useSpotifyEmbed } from "@/contexts/SpotifyPlayerContext";
 import { Message, MessageType } from "@/types/Message";
 import React from "react";
 
@@ -19,7 +19,7 @@ interface ChatMessageProps {
 }
 
 export function ChatMessage({message, messageId}: ChatMessageProps) {
-  const { playTracks, trackIndex, paused, currentPlayingId } = useSpotifyPlayer();
+  const { controller, setTrackIndex, trackIndex, setPaused, paused, currentPlayingId } = useSpotifyEmbed();
   const [imageBlobUrls, setImageBlobUrls] = useState<string[]>([]);
   const [imagesLoading, setImagesLoading] = useState(false);
   const [markdownImageBlobs, setMarkdownImageBlobs] = useState<Record<string, string>>({});
@@ -187,13 +187,14 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                           <img 
                             src={blobUrl}
                             alt={`Generated image ${idx + 1}`}
-                            className="w-full h-auto object-cover max-w-xs rounded-lg"
+                            className="w-full h-auto object-cover max-w-[22rem] rounded-lg"
                             loading="lazy"
                           />
                         </div>
                       ))}
                     </div>
-                    <CardFooter className="!pt-4 border-t border-gray-200/05 justify-center">
+                    {/* <CardFooter className="!pt-4 border-t border-gray-200/05 justify-center"> */}
+                    <CardFooter className=" justify-center">
                       {/* Player */}
                       <SpotifyPlayer trackUris={trackUris} playlistId={messageId} />
                     </CardFooter>
@@ -342,11 +343,14 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                     }
                   }
 
-                  const handleTrackClick = () => {
+                  const handleTrackClick = async () => {
                     if (!isSpotifyItem || !uri || currentIndex === -1) return;
 
                     setPlayingIndex(currentIndex);
-                    playTracks(trackUris, currentIndex);
+                    setTrackIndex(currentIndex);
+                    await controller.loadUri(trackUris[currentIndex]);
+                    await controller.play();
+                    setPaused(false);
                   };
                 
                   return isSpotifyItem ? (
@@ -368,7 +372,7 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                           style={{ color: "#6b7280" }}
                         />
                       ) : (
-                        <Pause
+                        <AudioLines
                           className="flex-shrink-0 h-4 w-4"
                           style={{ color: "#6b7280" }}
                         />

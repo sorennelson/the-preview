@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, ChevronFirst, ChevronLast } from 'lucide-react';
 import { FormEvent } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
@@ -11,6 +11,7 @@ import TextShuffle from "@/components/TextShuffle";
 import { Progress } from "@/components/ui/progress";
 import { ChatMessage } from "@/components/ChatMessage";
 import { Message, MessageType } from "@/types/Message";
+import SpotifyEmbed from "@/components/SpotifyEmbed";
 
 const FAST_APP = process.env.NEXT_PUBLIC_FAST_APP;
 
@@ -350,7 +351,7 @@ export default function Home() {
 
   return (
     <div className="font-sans grid grid-rows-[auto_1fr_auto] items-center justify-items-center min-h-screen p-4 sm:p-8 md:p-12 ">
-      <main className="flex flex-col gap-8 row-start-2 items-center w-full max-w-screen-xl sm:max-w-2xl sm:px-4 mb-24">
+      <main className="flex flex-col gap-8 row-start-2 items-center w-full max-w-screen-xl sm:max-w-2xl sm:px-4 mb-56">
         {chat.length === 0 && !loading && (
           <div className="text-center text-gray-500 mt-8 w-full">
             <p className="text-lg mb-2">The Preview</p>
@@ -415,6 +416,9 @@ export default function Home() {
 
       <footer className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg">
         <div className="mx-auto w-full max-w-screen-xl sm:max-w-2xl px-4">
+          
+          <SpotifyEmbed />
+
           <form
             className="flex justify-between w-full items-center gap-4 py-4"
             onSubmit={handleSubmit}
