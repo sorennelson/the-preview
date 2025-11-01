@@ -162,7 +162,7 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
       )}
 
       {message.messageType === MessageType.LLM && (
-        <div className="pl-6 flex gap-2 pr-6">
+        <div className="px-6 flex gap-2">
           <div className="w-full">
 
             {/* Image with tracks */}

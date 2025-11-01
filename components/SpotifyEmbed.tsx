@@ -211,12 +211,14 @@ export default function SpotifyEmbed() {
                 return newPositions;
               });
             }
+          // Seek to the saved position
           } else if (positionsRef.current[playingURI]) {
             const ms = positionsRef.current[playingURI];
             const seconds = ms / 1000;
             console.log("Seeking to", ms, "ms (", seconds, "seconds )");
             controllerRef.current.seek(seconds);
             
+            // Remove the position to handle multiple seeks
             setPositions(prevPositions => {
               const { [playingURI]: _, ...rest } = prevPositions;
               // Save updated positions to localStorage

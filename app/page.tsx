@@ -54,7 +54,6 @@ export default function Home() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [streamingStatus, setStreamingStatus] = useState<string>("");
   const [enableStreaming, setEnableStreaming] = useState(true);
-  // const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: session } = useSession();
 
@@ -70,20 +69,9 @@ export default function Home() {
     }
   }, [session]);
 
-  // // Auto-scroll to bottom when new messages arrive
-  // useEffect(() => {
-  //   // Use a small timeout to ensure DOM has updated
-  //   setTimeout(() => {
-  //     messagesEndRef.current?.scrollIntoView({ 
-  //       behavior: 'auto', // Use 'auto' instead of 'smooth' for iOS
-  //       block: 'end' 
-  //     });
-  //   }, 100);
-  // }, [chat]);
-
   const loadHistory = async (sid: string) => {
     try {
-      console.log('Loading history for session:', sid);
+      console.log('Loading history for session:', sid, FAST_APP);
       console.log("Access token:", accessToken);
       const response = await fetch(`${FAST_APP}/api/history/${sid}`, {
         headers: {
@@ -384,13 +372,15 @@ export default function Home() {
                     {streamingStatus} - This may take a few minutes
                   </p>
                 </div>
-                <Progress
-                  className="mb-8"
-                  value={
-                    (getPlaylistState[streamingStatus] * 100) /
-                    Object.keys(getPlaylistState).length
-                  }
-                />
+                <div className="w-full mb-8 px-12 lg:px-16">
+                  <Progress
+                    value={
+                      (getPlaylistState[streamingStatus] * 100) /
+                      Object.keys(getPlaylistState).length
+                    }
+                  />
+                </div>
+                
               </>
             )}
           </>
@@ -411,7 +401,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* <div ref={messagesEndRef} /> */}
       </main>
 
       <footer className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg">
