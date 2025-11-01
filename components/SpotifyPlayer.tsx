@@ -23,9 +23,10 @@ export default function SpotifyPlayer({ trackUris, playlistId }: SpotifyPlayerPr
     setTotalTracks,
     setCurrentTrackUris,
     setPaused,
+    pendingPlay,
+    setPendingPlay,
   } = useSpotifyEmbed();
 
-  // Only render on client side to avoid hydration mismatch
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -38,9 +39,41 @@ export default function SpotifyPlayer({ trackUris, playlistId }: SpotifyPlayerPr
       setTotalTracks(trackUris.length);
       setCurrentTrackUris(trackUris);
     }
-  }, [isThisPlaying, trackUris.length, playlistId, isMounted]);
+  }, [isThisPlaying, trackUris.length, playlistId, isMounted, setTotalTracks, setCurrentTrackUris]);
 
-  const playTrackAtIndex = useCallback(async (index: number) => {
+  // Effect to handle pending play after controller is ready
+  useEffect(() => {
+    if (controller && pendingPlay && isThisPlaying && trackUris[trackIndex]) {
+      console.log('Executing pending play:', trackIndex);
+      
+      try {
+        // Call loadUri - it may or may not return a promise
+        const loadResult = controller.loadUri(trackUris[trackIndex]);
+        
+        // If it returns a promise, wait for it
+        if (loadResult && typeof loadResult.then === 'function') {
+          loadResult.then(() => {
+            controller.play();
+            setPaused(false);
+            setPendingPlay(false);
+          }).catch((err: any) => {
+            console.error('Error loading track:', err);
+            setPendingPlay(false);
+          });
+        } else {
+          // Otherwise, just call play immediately
+          controller.play();
+          setPaused(false);
+          setPendingPlay(false);
+        }
+      } catch (err) {
+        console.error('Error in pending play:', err);
+        setPendingPlay(false);
+      }
+    }
+  }, [controller, pendingPlay, isThisPlaying, trackIndex, trackUris, setPaused, setPendingPlay]);
+
+  const playTrackAtIndex = useCallback((index: number) => {
     console.log('playTrackAtIndex called:', { index, hasController: !!controller });
     
     if (index < 0 || index >= trackUris.length) {
@@ -48,56 +81,65 @@ export default function SpotifyPlayer({ trackUris, playlistId }: SpotifyPlayerPr
       return;
     }
 
-    // Set the track index FIRST
     setTrackIndex(index);
 
-    // If we have a controller, use it
     if (controller) {
-      await controller.loadUri(trackUris[index]);
-      await controller.play();
-      setPaused(false);
+      try {
+        const loadResult = controller.loadUri(trackUris[index]);
+        
+        if (loadResult && typeof loadResult.then === 'function') {
+          loadResult.then(() => {
+            controller.play();
+            setPaused(false);
+          }).catch((err: any) => {
+            console.error('Error loading track:', err);
+          });
+        } else {
+          controller.play();
+          setPaused(false);
+        }
+      } catch (err) {
+        console.error('Error playing track:', err);
+      }
     } else {
-      console.log('No controller yet, waiting for embed to initialize');
+      console.log('No controller yet, setting pending play');
+      setPendingPlay(true);
     }
-  }, [controller, trackUris, setTrackIndex, setPaused]);
+  }, [controller, trackUris, setTrackIndex, setPaused, setPendingPlay]);
 
-  const handlePlay = useCallback(async () => {
+  const handlePlay = useCallback(() => {
     console.log('handlePlay called:', { isThisPlaying, playlistId });
     
     if (isThisPlaying && controller) {
-      // Already playing this playlist, just toggle
-      await controller.togglePlay();
+      controller.togglePlay();
     } else {
-      // Start playing this playlist
       console.log('Starting new playlist:', playlistId);
       setCurrentPlayingId(playlistId);
       setCurrentTrackUris(trackUris);
       setTotalTracks(trackUris.length);
       setTrackIndex(0);
       
-      // Wait a bit for the embed to initialize if no controller yet
       if (!controller) {
         console.log('Waiting for controller to initialize...');
-        setPaused(false);
+        setPendingPlay(true);
       } else {
-        await playTrackAtIndex(0);
+        playTrackAtIndex(0);
       }
     }
-  }, [controller, isThisPlaying, setCurrentPlayingId, playlistId, playTrackAtIndex, trackUris, setCurrentTrackUris, setTotalTracks, setTrackIndex, setPaused]);
+  }, [controller, isThisPlaying, setCurrentPlayingId, playlistId, playTrackAtIndex, trackUris, setCurrentTrackUris, setTotalTracks, setTrackIndex, setPendingPlay]);
 
-  const handleNext = useCallback(async () => {
+  const handleNext = useCallback(() => {
     if (!isThisPlaying) return;
     const nextIndex = Math.min(trackIndex + 1, trackUris.length - 1);
-    await playTrackAtIndex(nextIndex);
+    playTrackAtIndex(nextIndex);
   }, [isThisPlaying, trackIndex, trackUris.length, playTrackAtIndex]);
 
-  const handlePrevious = useCallback(async () => {
+  const handlePrevious = useCallback(() => {
     if (!isThisPlaying) return;
     const prevIndex = Math.max(trackIndex - 1, 0);
-    await playTrackAtIndex(prevIndex);
+    playTrackAtIndex(prevIndex);
   }, [isThisPlaying, trackIndex, playTrackAtIndex]);
 
-  // Don't render until mounted to avoid hydration mismatch
   if (!isMounted) {
     return (
       <div className="flex flex-col items-center gap-2">

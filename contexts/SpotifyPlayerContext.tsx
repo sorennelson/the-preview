@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useRef, useState, useEffect, createContext, useContext, ReactNode, useCallback } from 'react';
 
 interface SpotifyEmbedContextType {
   controller: any;
@@ -15,6 +15,12 @@ interface SpotifyEmbedContextType {
   setTotalTracks: (total: number) => void;
   currentTrackUris: string[];
   setCurrentTrackUris: (uris: string[]) => void;
+  pendingPlay: boolean;
+  setPendingPlay: (pending: boolean) => void;
+  positionsRef: React.MutableRefObject<Record<string, number>>;
+  setPositions: (
+    updater: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)
+  ) => void;
 }
 
 const SpotifyEmbedContext = createContext<SpotifyEmbedContextType | null>(null);
@@ -26,6 +32,17 @@ export function SpotifyEmbedProvider({ children }: { children: ReactNode }) {
   const [trackIndex, setTrackIndex] = useState(0);
   const [totalTracks, setTotalTracks] = useState(0);
   const [currentTrackUris, setCurrentTrackUris] = useState<string[]>([]);
+  const [pendingPlay, setPendingPlay] = useState(false);
+
+  const positionsRef = useRef<Record<string, number>>({});
+
+  const setPositions = useCallback((updater: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)) => {
+    if (typeof updater === 'function') {
+      positionsRef.current = updater(positionsRef.current);
+    } else {
+      positionsRef.current = updater;
+    }
+  }, []);
 
   const value = {
     controller,
@@ -40,6 +57,10 @@ export function SpotifyEmbedProvider({ children }: { children: ReactNode }) {
     setTotalTracks,
     currentTrackUris,
     setCurrentTrackUris,
+    pendingPlay,
+    setPendingPlay,
+    positionsRef,
+    setPositions,
   };
 
   return (

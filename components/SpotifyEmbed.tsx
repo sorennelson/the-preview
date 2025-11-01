@@ -20,7 +20,7 @@ export default function SpotifyEmbed() {
   const [isMounted, setIsMounted] = useState(false);
   const controllerRef = useRef<any>(null);
   
-  const { setController, setPaused, trackIndex, currentTrackUris, currentPlayingId } = useSpotifyEmbed();
+  const { setController, setPaused, trackIndex, currentTrackUris, currentPlayingId, positionsRef, setPositions } = useSpotifyEmbed();
 
   const currentUri = currentTrackUris && trackIndex !== null && trackIndex >= 0 
     ? currentTrackUris[trackIndex] 
@@ -33,6 +33,30 @@ export default function SpotifyEmbed() {
     hasController: !!controllerRef.current,
     isMounted 
   });
+
+  // Load positions from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('spotify-positions');
+      if (saved) {
+        const savedPositions = JSON.parse(saved);
+        setPositions(savedPositions);
+        console.log('Loaded positions from localStorage:', savedPositions);
+      }
+    } catch (error) {
+      console.error('Error loading positions from localStorage:', error);
+    }
+  }, [setPositions]);
+
+  // Save positions to localStorage
+  const savePositionsToStorage = (positions: Record<string, number>) => {
+    try {
+      localStorage.setItem('spotify-positions', JSON.stringify(positions));
+      console.log('Saved positions to localStorage');
+    } catch (error) {
+      console.error('Error saving positions to localStorage:', error);
+    }
+  };
 
   // Only render on client side
   useEffect(() => {
@@ -117,8 +141,35 @@ export default function SpotifyEmbed() {
         });
 
         newController.addListener("playback_update", (e: any) => {
-          const { isPaused } = e.data;
+          const { isPaused, position, playingURI } = e.data;
           setPaused(isPaused);
+
+          if (position > 30000) {
+            // Only save positions for episodes after 30 seconds
+            if (playingURI && playingURI.includes("episode")) {
+              setPositions(prevPositions => {
+                const newPositions = {
+                  ...prevPositions,
+                  [playingURI]: position,
+                };
+                // Save to localStorage
+                savePositionsToStorage(newPositions);
+                return newPositions;
+              });
+            }
+          } else if (positionsRef.current[playingURI]) {
+            const ms = positionsRef.current[playingURI];
+            const seconds = ms / 1000;
+            console.log("Seeking to", ms, "ms (", seconds, "seconds )");
+            controllerRef.current.seek(seconds);
+            
+            setPositions(prevPositions => {
+              const { [playingURI]: _, ...rest } = prevPositions;
+              // Save updated positions to localStorage
+              savePositionsToStorage(rest);
+              return rest;
+            });
+          }
         });
 
         newController.addListener("error", (e: any) => {

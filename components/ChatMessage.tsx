@@ -159,7 +159,7 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
         <Card className="pt-4 pb-4">
           <CardContent className="pl-4 flex gap-2">
             <div>
-              <CirclePlay className="h-5 w-5" />
+              <CirclePlay className="h-5 w-5 mt-0.25" />
             </div>
             <Label className="whitespace-pre-line leading-relaxed select-text">{messageText}</Label>
           </CardContent>
@@ -304,14 +304,34 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                   ),
 
                 li: (rawProps: any) => {
-                  const href = React.Children.toArray(rawProps.children)
-                    .map((child) =>
-                      typeof child === "string"
-                        ? child
-                        : (child as any)?.props?.href ?? ""
-                    )
-                    .join(" ")
-                    .trim();
+                  const findHref = (children: React.ReactNode): string => {
+                    let href = "";
+                    
+                    React.Children.forEach(children, (child) => {
+                      if (href) return; // Already found one
+                      
+                      if (typeof child === "string") {
+                        return;
+                      }
+                      
+                      if (React.isValidElement(child)) {
+                        // Check if this element has an href
+                        if ((child.props as any)?.href) {
+                          href = (child.props as any).href;
+                          return;
+                        }
+                        
+                        // Recursively search children
+                        const props = child.props as any;
+                        if (props?.children) {
+                          href = findHref(props.children);
+                        }
+                      }
+                    });
+                    
+                    return href;
+                  };                  
+                  const href = findHref(rawProps.children);
 
                   const isSpotifyItemCheck = (url: string): boolean => {
                     const trackRegex = /https:\/\/open\.spotify\.com\/track\/[a-zA-Z0-9]+/g;
@@ -355,7 +375,7 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                 
                   return isSpotifyItem ? (
                     <li
-                      className="hover:bg-slate-800 flex gap-4 items-center"
+                      className="hover:bg-slate-800 flex gap-4"
                       style={{
                         paddingTop: "1rem",
                         paddingBottom: "1rem",
@@ -368,12 +388,12 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                     >
                       {currentIndex !== playingIndex || currentIndex === -1 || paused || messageId !== currentPlayingId  ? (
                         <Play
-                          className="flex-shrink-0 h-4 w-4"
+                          className="flex-shrink-0 h-4 w-4 mt-1"
                           style={{ color: "#6b7280" }}
                         />
                       ) : (
                         <AudioLines
-                          className="flex-shrink-0 h-4 w-4"
+                          className="flex-shrink-0 h-4 w-4 mt-1"
                           style={{ color: "#6b7280" }}
                         />
                       )}
