@@ -42,7 +42,7 @@ const defaultMessages: Message[] = [
   },
   {
     messageType: MessageType.User,
-    text: "Create a playlist with the latest from my favorites.",
+    text: "Create a playlist with the latest from my favorite songs and podcasts.",
     date: new Date(),
   },
 ];
