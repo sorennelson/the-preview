@@ -25,6 +25,7 @@ export default function SpotifyPlayer({ trackUris, playlistId }: SpotifyPlayerPr
     setPaused,
     pendingPlay,
     setPendingPlay,
+    playTrack,
   } = useSpotifyEmbed();
 
   useEffect(() => {
@@ -73,40 +74,6 @@ export default function SpotifyPlayer({ trackUris, playlistId }: SpotifyPlayerPr
     }
   }, [controller, pendingPlay, isThisPlaying, trackIndex, trackUris, setPaused, setPendingPlay]);
 
-  const playTrackAtIndex = useCallback((index: number) => {
-    console.log('playTrackAtIndex called:', { index, hasController: !!controller });
-    
-    if (index < 0 || index >= trackUris.length) {
-      console.error('Invalid track index:', index);
-      return;
-    }
-
-    setTrackIndex(index);
-
-    if (controller) {
-      try {
-        const loadResult = controller.loadUri(trackUris[index]);
-        
-        if (loadResult && typeof loadResult.then === 'function') {
-          loadResult.then(() => {
-            controller.play();
-            setPaused(false);
-          }).catch((err: any) => {
-            console.error('Error loading track:', err);
-          });
-        } else {
-          controller.play();
-          setPaused(false);
-        }
-      } catch (err) {
-        console.error('Error playing track:', err);
-      }
-    } else {
-      console.log('No controller yet, setting pending play');
-      setPendingPlay(true);
-    }
-  }, [controller, trackUris, setTrackIndex, setPaused, setPendingPlay]);
-
   const handlePlay = useCallback(() => {
     console.log('handlePlay called:', { isThisPlaying, playlistId });
     
@@ -123,22 +90,22 @@ export default function SpotifyPlayer({ trackUris, playlistId }: SpotifyPlayerPr
         console.log('Waiting for controller to initialize...');
         setPendingPlay(true);
       } else {
-        playTrackAtIndex(0);
+        playTrack(0);
       }
     }
-  }, [controller, isThisPlaying, setCurrentPlayingId, playlistId, playTrackAtIndex, trackUris, setCurrentTrackUris, setTotalTracks, setTrackIndex, setPendingPlay]);
+  }, [controller, isThisPlaying, setCurrentPlayingId, playlistId, playTrack, trackUris, setCurrentTrackUris, setTotalTracks, setTrackIndex, setPendingPlay]);
 
   const handleNext = useCallback(() => {
     if (!isThisPlaying) return;
     const nextIndex = Math.min(trackIndex + 1, trackUris.length - 1);
-    playTrackAtIndex(nextIndex);
-  }, [isThisPlaying, trackIndex, trackUris.length, playTrackAtIndex]);
+    playTrack(nextIndex);
+  }, [isThisPlaying, trackIndex, trackUris.length, playTrack]);
 
   const handlePrevious = useCallback(() => {
     if (!isThisPlaying) return;
     const prevIndex = Math.max(trackIndex - 1, 0);
-    playTrackAtIndex(prevIndex);
-  }, [isThisPlaying, trackIndex, playTrackAtIndex]);
+    playTrack(prevIndex);
+  }, [isThisPlaying, trackIndex, playTrack]);
 
   if (!isMounted) {
     return (

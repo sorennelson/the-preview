@@ -19,11 +19,10 @@ interface ChatMessageProps {
 }
 
 export function ChatMessage({message, messageId}: ChatMessageProps) {
-  const { controller, setTrackIndex, trackIndex, setPaused, paused, currentPlayingId } = useSpotifyEmbed();
+  const { controller, setTrackIndex, trackIndex, setPaused, paused, currentPlayingId, setCurrentPlayingId, setCurrentTrackUris, setTotalTracks, playTrack } = useSpotifyEmbed();
   const [imageBlobUrls, setImageBlobUrls] = useState<string[]>([]);
   const [imagesLoading, setImagesLoading] = useState(false);
   const [markdownImageBlobs, setMarkdownImageBlobs] = useState<Record<string, string>>({});
-  const [playingIndex, setPlayingIndex] = useState(-1);
 
   let messageText = message.text;
 
@@ -35,10 +34,6 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
       messageText = messageText.substring(0, messageText.length - 3).trimEnd();
     }
   }
-
-  useEffect(() => {
-    setPlayingIndex(trackIndex ?? -1);
-  }, [trackIndex])
 
   // Load images with ngrok-skip-browser-warning header
   useEffect(() => {
@@ -171,41 +166,27 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
           <div className="w-full">
 
             {/* Image with tracks */}
-            {trackUris.length > 0 && (
-              <Card className="py-4 px-0 mb-4">
-                {imageBlobUrls.length > 0 ? (
-                  <>
-                    <div className="mb-0 grid grid-cols-1 gap-4 px-4">
-                      {/* Loading state for images with tracks */}
-                      {imagesLoading && message.images && message.images.length > 0 && (
-                        <div className="mb-2 flex justify-center items-center">
-                          <Spinner />
-                        </div>
-                      )}
-                      {imageBlobUrls.map((blobUrl, idx) => (
-                        <div key={idx} className="relative overflow-hidden flex justify-center items-center">
-                          <img 
-                            src={blobUrl}
-                            alt={`Generated image ${idx + 1}`}
-                            className="w-full h-auto object-cover max-w-[22rem] rounded-lg"
-                            loading="lazy"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                    {/* <CardFooter className="!pt-4 border-t border-gray-200/05 justify-center"> */}
-                    <CardFooter className=" justify-center">
-                      {/* Player */}
-                      <SpotifyPlayer trackUris={trackUris} playlistId={messageId} />
-                    </CardFooter>
-                  </>
-                ) : (
-                  <div className="justify-center">
-                      {/* Player */}
-                      <SpotifyPlayer trackUris={trackUris} playlistId={messageId} />
+            {trackUris.length > 0 && imageBlobUrls.length > 0 && (
+              <div className="mt-2 mb-6 max-w-[22rem] mx-auto">
+                  <div className="mb-0 grid grid-cols-1 gap-4 px-4">
+                    {/* Loading state for images with tracks */}
+                    {imagesLoading && message.images && message.images.length > 0 && (
+                      <div className="mb-2 flex justify-center items-center">
+                        <Spinner />
+                      </div>
+                    )}
+                    {imageBlobUrls.map((blobUrl, idx) => (
+                      <div key={idx} className="relative overflow-hidden flex justify-center items-center">
+                        <img 
+                          src={blobUrl}
+                          alt={`Generated image ${idx + 1}`}
+                          className="w-full h-auto object-cover max-w-[22rem] rounded-lg"
+                          loading="lazy"
+                        />
+                      </div>
+                    ))}
                   </div>
-                )}
-              </Card>
+              </div>
             )}
 
             {/* LLM message markdown */}
@@ -365,17 +346,18 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
 
                   const handleTrackClick = async () => {
                     if (!isSpotifyItem || !uri || currentIndex === -1) return;
-
-                    setPlayingIndex(currentIndex);
+                  
+                    setCurrentPlayingId(messageId);
+                    setCurrentTrackUris(trackUris);
                     setTrackIndex(currentIndex);
-                    await controller.loadUri(trackUris[currentIndex]);
-                    await controller.play();
+                    setTotalTracks(trackUris.length);
+                    playTrack(currentIndex, trackUris); // Pass trackUris directly
                     setPaused(false);
                   };
                 
                   return isSpotifyItem ? (
                     <li
-                      className="hover:bg-slate-800 flex gap-4"
+                      className="hover:bg-slate-800/30 flex gap-4"
                       style={{
                         paddingTop: "1rem",
                         paddingBottom: "1rem",
@@ -386,7 +368,7 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                       onClick={handleTrackClick}
                       {...rawProps}
                     >
-                      {currentIndex !== playingIndex || currentIndex === -1 || paused || messageId !== currentPlayingId  ? (
+                      {currentIndex !== trackIndex || currentIndex === -1 || messageId !== currentPlayingId  ? (
                         <Play
                           className="flex-shrink-0 h-4 w-4 mt-1"
                           style={{ color: "#6b7280" }}

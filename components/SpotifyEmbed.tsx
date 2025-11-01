@@ -20,11 +20,33 @@ export default function SpotifyEmbed() {
   const [isMounted, setIsMounted] = useState(false);
   const controllerRef = useRef<any>(null);
   
-  const { setController, setPaused, trackIndex, currentTrackUris, currentPlayingId, positionsRef, setPositions } = useSpotifyEmbed();
+  const { 
+    setController, 
+    setPaused, 
+    trackIndex, 
+    currentTrackUris, 
+    currentPlayingId, 
+    positionsRef, 
+    setPositions,
+    playTrack,
+    totalTracks 
+  } = useSpotifyEmbed();
 
   const currentUri = currentTrackUris && trackIndex !== null && trackIndex >= 0 
     ? currentTrackUris[trackIndex] 
     : null;
+  
+  // Use refs to always have current values in event listeners
+  const trackIndexRef = useRef(trackIndex);
+  const totalTracksRef = useRef(totalTracks);
+  const playTrackRef = useRef(playTrack);
+  const skippingRef = useRef(false);
+  
+  useEffect(() => {
+    trackIndexRef.current = trackIndex;
+    totalTracksRef.current = totalTracks;
+    playTrackRef.current = playTrack;
+  }, [trackIndex, totalTracks, playTrack]);
 
   console.log('SpotifyEmbed render:', { 
     currentPlayingId, 
@@ -141,16 +163,48 @@ export default function SpotifyEmbed() {
         });
 
         newController.addListener("playback_update", (e: any) => {
-          const { isPaused, position, playingURI } = e.data;
+          const { isPaused, position, duration, playingURI } = e.data;
           setPaused(isPaused);
 
+          // Check if track has ended (within 1 second of duration) to autoplay the next track
+          if (
+            duration &&
+            position &&
+            !isPaused &&
+            duration - position < 1000 &&
+            !skippingRef.current
+          ) {
+            skippingRef.current = true; // move this line above async work
+          
+            const currentIndex = trackIndexRef.current;
+            const currentTotal = totalTracksRef.current;
+          
+            if (currentIndex < currentTotal - 1) {
+              console.log("Auto-playing next track:", currentIndex + 1);
+              setTimeout(() => {
+                playTrackRef.current(currentIndex + 1);
+                // reset after a delay to allow controller to update
+                setTimeout(() => {
+                  skippingRef.current = false;
+                }, 2000);
+              }, 500);
+            } else {
+              console.log("Reached end of playlist");
+            }
+          }
+          
+
+          // Seeking to the position of the track
           if (position > 30000) {
             // Only save positions for episodes after 30 seconds
             if (playingURI && playingURI.includes("episode")) {
+              // Reset position to 0 if the track is ending
+              const newPosition = duration && position && duration - position < 1000 ? 0 : position;
+              
               setPositions(prevPositions => {
                 const newPositions = {
                   ...prevPositions,
-                  [playingURI]: position,
+                  [playingURI]: newPosition,
                 };
                 // Save to localStorage
                 savePositionsToStorage(newPositions);

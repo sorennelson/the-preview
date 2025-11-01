@@ -21,6 +21,7 @@ interface SpotifyEmbedContextType {
   setPositions: (
     updater: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)
   ) => void;
+  playTrack: (index: number, uris?: string[]) => void;
 }
 
 const SpotifyEmbedContext = createContext<SpotifyEmbedContextType | null>(null);
@@ -35,6 +36,41 @@ export function SpotifyEmbedProvider({ children }: { children: ReactNode }) {
   const [pendingPlay, setPendingPlay] = useState(false);
 
   const positionsRef = useRef<Record<string, number>>({});
+  const currentTrackUrisRef = useRef<string[]>([]);
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    currentTrackUrisRef.current = currentTrackUris;
+  }, [currentTrackUris]);
+
+  // Handle pending play when controller becomes available
+  useEffect(() => {
+    if (controller && pendingPlay && currentTrackUris.length > 0 && currentTrackUris[trackIndex]) {
+      console.log('Executing pending play:', trackIndex);
+      
+      try {
+        const loadResult = controller.loadUri(currentTrackUris[trackIndex]);
+        
+        if (loadResult && typeof loadResult.then === 'function') {
+          loadResult.then(() => {
+            controller.play();
+            setPaused(false);
+            setPendingPlay(false);
+          }).catch((err: any) => {
+            console.error('Error loading track:', err);
+            setPendingPlay(false);
+          });
+        } else {
+          controller.play();
+          setPaused(false);
+          setPendingPlay(false);
+        }
+      } catch (err) {
+        console.error('Error in pending play:', err);
+        setPendingPlay(false);
+      }
+    }
+  }, [controller, pendingPlay, currentTrackUris]);;
 
   const setPositions = useCallback((updater: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)) => {
     if (typeof updater === 'function') {
@@ -43,6 +79,41 @@ export function SpotifyEmbedProvider({ children }: { children: ReactNode }) {
       positionsRef.current = updater;
     }
   }, []);
+
+  const playTrack = useCallback((index: number, uris?: string[]) => {
+    const trackUris = uris || currentTrackUrisRef.current;
+    console.log('playTrack called:', { index, hasController: !!controller, trackUris: trackUris.length });
+    
+    if (index < 0 || index >= trackUris.length) {
+      console.error('Invalid track index:', index);
+      return;
+    }
+
+    setTrackIndex(index);
+
+    if (controller) {
+      try {
+        const loadResult = controller.loadUri(trackUris[index]);
+        
+        if (loadResult && typeof loadResult.then === 'function') {
+          loadResult.then(() => {
+            controller.play();
+            setPaused(false);
+          }).catch((err: any) => {
+            console.error('Error loading track:', err);
+          });
+        } else {
+          controller.play();
+          setPaused(false);
+        }
+      } catch (err) {
+        console.error('Error playing track:', err);
+      }
+    } else {
+      console.log('No controller yet, setting pending play');
+      setPendingPlay(true);
+    }
+  }, [controller, setTrackIndex, setPaused, setPendingPlay]);
 
   const value = {
     controller,
@@ -61,6 +132,7 @@ export function SpotifyEmbedProvider({ children }: { children: ReactNode }) {
     setPendingPlay,
     positionsRef,
     setPositions,
+    playTrack,
   };
 
   return (
