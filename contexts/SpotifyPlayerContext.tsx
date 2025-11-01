@@ -17,7 +17,7 @@ interface SpotifyEmbedContextType {
   setCurrentTrackUris: (uris: string[]) => void;
   pendingPlay: boolean;
   setPendingPlay: (pending: boolean) => void;
-  positionsRef: React.MutableRefObject<Record<string, number>>;
+  positionsRef: React.RefObject<Record<string, number>>;
   setPositions: (
     updater: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)
   ) => void;

@@ -372,13 +372,12 @@ export default function Home() {
 
         {loading && (
           <>
-            {streamingStatus === "Thinking" && (
-              <div className="w-full flex justify-center items-center gap-2">
+            {streamingStatus === "Thinking" ? (
+              <div className="w-full flex justify-center items-center gap-2 mb-8">
                 <Spinner />
                 <p className="text-sm text-muted-foreground animate-pulse">{streamingStatus}</p>
               </div>
-            )}
-            {streamingStatus && streamingStatus !== "Thinking" && (
+            ) : (
               <>
                 <div className="flex justify-center w-full">
                   <p className="text-sm text-muted-foreground animate-pulse">
@@ -386,6 +385,7 @@ export default function Home() {
                   </p>
                 </div>
                 <Progress
+                  className="mb-8"
                   value={
                     (getPlaylistState[streamingStatus] * 100) /
                     Object.keys(getPlaylistState).length

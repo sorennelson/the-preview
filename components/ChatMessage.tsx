@@ -347,11 +347,12 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                   const handleTrackClick = async () => {
                     if (!isSpotifyItem || !uri || currentIndex === -1) return;
 
+                    // If the track is already playing, toggle play
                     if (currentIndex === trackIndex && currentPlayingId === messageId) {
                       togglePlay();
                       return;
                     }
-                  
+                    // Play track
                     setCurrentPlayingId(messageId);
                     setCurrentTrackUris(trackUris);
                     setTrackIndex(currentIndex);
@@ -362,7 +363,7 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                 
                   return isSpotifyItem ? (
                     <li
-                      className="hover:bg-slate-800/30 flex gap-4"
+                      className="hover:bg-slate-800/30 flex gap-4.5"
                       style={{
                         paddingTop: "1rem",
                         paddingBottom: "1rem",
