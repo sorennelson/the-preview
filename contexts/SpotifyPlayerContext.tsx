@@ -21,6 +21,7 @@ interface SpotifyEmbedContextType {
   setPositions: (
     updater: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)
   ) => void;
+  togglePlay: () => void;
   playTrack: (index: number, uris?: string[]) => void;
 }
 
@@ -115,6 +116,12 @@ export function SpotifyEmbedProvider({ children }: { children: ReactNode }) {
     }
   }, [controller, setTrackIndex, setPaused, setPendingPlay]);
 
+  const togglePlay = useCallback(() => {
+    if (controller) {
+      controller.togglePlay();
+    }
+  }, [controller]);
+
   const value = {
     controller,
     setController,
@@ -133,6 +140,7 @@ export function SpotifyEmbedProvider({ children }: { children: ReactNode }) {
     positionsRef,
     setPositions,
     playTrack,
+    togglePlay,
   };
 
   return (

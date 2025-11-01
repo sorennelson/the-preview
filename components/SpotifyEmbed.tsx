@@ -233,17 +233,6 @@ export default function SpotifyEmbed() {
     );
   }, [iFrameAPI, setController, setPaused, currentUri, isMounted, accessToken]);
 
-  const convertUriToEmbedUrl = (spotifyUri: string) => {
-    if (spotifyUri.startsWith("spotify:")) {
-      const parts = spotifyUri.split(":");
-      return `https://open.spotify.com/embed/${parts[1]}/${parts[2]}`;
-    }
-    if (spotifyUri.includes("open.spotify.com")) {
-      return spotifyUri.replace("open.spotify.com/", "open.spotify.com/embed/");
-    }
-    return "";
-  };
-
   // Always render the container once mounted
   if (!isMounted) {
     return null;

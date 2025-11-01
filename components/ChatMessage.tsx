@@ -19,7 +19,7 @@ interface ChatMessageProps {
 }
 
 export function ChatMessage({message, messageId}: ChatMessageProps) {
-  const { controller, setTrackIndex, trackIndex, setPaused, paused, currentPlayingId, setCurrentPlayingId, setCurrentTrackUris, setTotalTracks, playTrack } = useSpotifyEmbed();
+  const { controller, setTrackIndex, trackIndex, setPaused, paused, currentPlayingId, setCurrentPlayingId, setCurrentTrackUris, setTotalTracks, playTrack, togglePlay } = useSpotifyEmbed();
   const [imageBlobUrls, setImageBlobUrls] = useState<string[]>([]);
   const [imagesLoading, setImagesLoading] = useState(false);
   const [markdownImageBlobs, setMarkdownImageBlobs] = useState<Record<string, string>>({});
@@ -346,12 +346,17 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
 
                   const handleTrackClick = async () => {
                     if (!isSpotifyItem || !uri || currentIndex === -1) return;
+
+                    if (currentIndex === trackIndex && currentPlayingId === messageId) {
+                      togglePlay();
+                      return;
+                    }
                   
                     setCurrentPlayingId(messageId);
                     setCurrentTrackUris(trackUris);
                     setTrackIndex(currentIndex);
                     setTotalTracks(trackUris.length);
-                    playTrack(currentIndex, trackUris); // Pass trackUris directly
+                    playTrack(currentIndex, trackUris);
                     setPaused(false);
                   };
                 
@@ -370,12 +375,12 @@ export function ChatMessage({message, messageId}: ChatMessageProps) {
                     >
                       {currentIndex !== trackIndex || currentIndex === -1 || messageId !== currentPlayingId  ? (
                         <Play
-                          className="flex-shrink-0 h-4 w-4 mt-1"
+                          className="flex-shrink-0 h-4 w-4 mt-1 cursor-pointer"
                           style={{ color: "#6b7280" }}
                         />
                       ) : (
                         <AudioLines
-                          className="flex-shrink-0 h-4 w-4 mt-1"
+                          className="flex-shrink-0 h-4 w-4 mt-1 cursor-pointer"
                           style={{ color: "#6b7280" }}
                         />
                       )}
